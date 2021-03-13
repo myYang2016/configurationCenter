@@ -1,0 +1,70 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "es6": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:sonarjs/recommended"
+  ],
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": 2017
+  },
+  "plugins": [
+    "sonarjs",
+    "@typescript-eslint"
+  ],
+  "rules": {
+    "no-var": "error",
+    "@typescript-eslint/consistent-type-definitions": [
+      "error",
+      "interface"
+    ],
+    "@typescript-eslint/no-unused-vars": ["warn"],
+    "no-unused-vars": "off",
+    "linebreak-style": [
+      "off",
+      "windows"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "curly": 2,
+    "object-curly-newline": 2,
+    "brace-style": 2,
+    "indent": [
+      "warn",
+      2
+    ],
+    "no-undef": 2,
+    "no-console": "off",
+    "require-atomic-updates": 0,
+    "max-len": [
+      "error",
+      {
+        "code": 100
+      }
+    ],
+    "sonarjs/no-redundant-jump": "off",
+    "no-redeclare": 2,
+    "block-scoped-var": 2,
+    "no-use-before-define": [
+      2,
+      {
+        "functions": false
+      }
+    ],
+    "require-await": "error"
+  },
+  "globals": {
+    "process": true,
+    "describe": true,
+    "it": true,
+    "Buffer": true,
+    "__dirname": true
+  }
+}
