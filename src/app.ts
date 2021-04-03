@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
+import path from 'path';
 const mutipart = require('connect-multiparty');
 
 import polling from './api/polling';
@@ -20,6 +21,7 @@ app.use(bodyParser.json({ limit: '100mb' }));
 app.use(mutipart({ uploadDir: '/tmp' }));
 
 app.use('/api', polling);
+app.use('/', express.static(path.resolve(__dirname, 'page')));
 
 const port = 9000;
 const server = app.listen(port, () => {

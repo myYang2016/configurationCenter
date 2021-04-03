@@ -20,12 +20,13 @@ router.post('/listenData', async (req, res) => {
   let { key, id } = data as { id?: string, key: string };
   const insertNewData = (json: string) => {
     id = uuid.v1();
-    ConfigDataForClient.create({ id, key }).then(() => {
+    ConfigDataForClient.create({ id, key, json }).then(() => {
       res.json(portResult.success('', { id, json }));
     }).catch(error => {
       res.json(portResult.error('', { error }));
     });
   };
+  ConfigDataForServer.find({ }).then(console.log);
   const currentData: any = await ConfigDataForServer.find({ key });
   const currentJson = (currentData && currentData.length && currentData[0].json) || '';
   if (id) {
@@ -38,13 +39,14 @@ router.post('/listenData', async (req, res) => {
         });
         res.json(portResult.success('', { id, json: currentJson }));
       } else {
-        const listenKey = `config_polling_${key}`;
+        const listenKey = getKey(key);
         let timeout: any;
         const eventCallback = (json: string) => {
           clearTimeout(timeout);
           emitter.removeListener(listenKey, eventCallback);
-          ConfigDataForClient.findOneAndUpdate({ id, json, createdAt: Date.now() });
-          res.json(portResult.success('', { id, json }));
+          ConfigDataForClient.findOneAndUpdate({ id, json, createdAt: Date.now() }).then(() => {
+            res.json(portResult.success('', { id, json }));
+          });
         };
         timeout = setTimeout(() => {
           eventCallback(currentJson);
@@ -81,9 +83,11 @@ router.post('/updateData', async (req, res) => {
   }
   try {
     let result = await ConfigDataForServer.findOneAndUpdate(setData);
+    ConfigDataForServer.find({}).then(console.log);
     if (!result) {
       result = await ConfigDataForServer.create(setData);
     }
+    emitter.emit(getKey(key), json);
     res.json(portResult.success('', result));
   } catch (error) {
     res.json(portResult.error('', { error }));
@@ -106,5 +110,9 @@ router.post('/deleteData', (req, res) => {
     res.json(portResult.error('', { error }));
   });
 });
+
+function getKey(key: string) {
+  return `config_polling_${key}`;
+}
 
 export default router;

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div>
+    <textarea name="" id="textInput" cols="30" rows="10"></textarea>
+    <button onclick="handleClickBtn()">提交</button>
+  </div>
+  <script src="/common.js"></script>
+  <script>
+    function handleClickBtn() {
+      const $text = document.querySelector('#textInput');
+      if (!$text.value) {
+        return;
+      };
+      ajax({
+        url: '/api/updateData',
+        data: {
+          key: 'testName',
+          json: JSON.stringify({
+            name: 'yang',
+            age: 234,
+            text: $text.value,
+          }),
+        },
+        type: 'post',
+      }).then(console.log);
+    }
+  </script>
+</body>
+</html>
