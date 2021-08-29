@@ -77,3 +77,7 @@ function isType(val: any, type: string): boolean {
   }
   return typeof val === t;
 }
+
+export function delay(time: number) {
+  return new Promise(resolve => setTimeout(resolve, time));
+}

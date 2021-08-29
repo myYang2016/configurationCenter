@@ -3,6 +3,8 @@ import { checkDataType, portResult } from '../common/utils';
 import ConfigDataForClient from '../schema/configForClient';
 import ConfigDataForServer from '../schema/configForServer';
 import emitter from '../common/eventEmitter';
+import { getKey, getCurrentData } from '../common/common';
+import WaitToResponse from './WaitToResponse';
 
 const router = express.Router();
 const uuid = require('uuid');
@@ -20,47 +22,28 @@ router.post('/listenData', async (req, res) => {
   let { key, id } = data as { id?: string, key: string };
   const insertNewData = (json: string) => {
     id = uuid.v1();
-    ConfigDataForClient.create({ id, key, json }).then(() => {
+    ConfigDataForClient.create({ id, key }).then(() => {
       res.json(portResult.success('', { id, json }));
     }).catch(error => {
       res.json(portResult.error('', { error }));
     });
   };
-  ConfigDataForServer.find({ }).then(console.log);
-  const currentData: any = await ConfigDataForServer.find({ key });
-  const currentJson = (currentData && currentData.length && currentData[0].json) || '';
+  ConfigDataForServer.find({}).then(console.log);
+  const currentData = await getCurrentData({ params: { key } });
   if (id) {
-    const historyData: any = await ConfigDataForClient.find({ id });
-    if (historyData && historyData.length) {
-      const historyJson = historyData[0].json;
-      if (currentJson !== historyJson) {
-        await ConfigDataForClient.findOneAndUpdate({ 
-          id, json: currentJson, createdAt: Date.now() 
-        });
-        res.json(portResult.success('', { id, json: currentJson }));
+    const historyData: any = await getCurrentData({ type: 'client', params: { id } });
+    if (historyData) {
+      await ConfigDataForClient.findOneAndUpdate({ id, createdAt: Date.now() });
+      if (currentData.createdAt > historyData.createdAt) {
+        res.json(portResult.success('', { id, json: currentData.json }));
       } else {
-        const listenKey = getKey(key);
-        let timeout: any;
-        const eventCallback = (json: string) => {
-          clearTimeout(timeout);
-          emitter.removeListener(listenKey, eventCallback);
-          ConfigDataForClient.findOneAndUpdate({ id, json, createdAt: Date.now() }).then(() => {
-            res.json(portResult.success('', { id, json }));
-          });
-        };
-        timeout = setTimeout(() => {
-          eventCallback(currentJson);
-        }, 60000);
-        emitter.on(listenKey, eventCallback);
-        await ConfigDataForClient.findOneAndUpdate({ 
-          id, json: historyJson, createdAt: Date.now() 
-        });
+        WaitToResponse.push({ id, res, key }, 60000);
       }
     } else {
-      insertNewData(currentJson);
+      insertNewData(currentData.json);
     }
   } else {
-    insertNewData(currentJson);
+    insertNewData(currentData.json);
   }
 });
 
@@ -110,9 +93,5 @@ router.post('/deleteData', (req, res) => {
     res.json(portResult.error('', { error }));
   });
 });
-
-function getKey(key: string) {
-  return `config_polling_${key}`;
-}
 
 export default router;

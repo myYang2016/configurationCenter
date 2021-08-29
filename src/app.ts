@@ -2,16 +2,15 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import path from 'path';
+import config from './config';
+import { logger } from './common/logger';
 const mutipart = require('connect-multiparty');
 
 import polling from './api/polling';
 
 //连接数据库
-const dbPort = process.env.NODE_ENV === 'development' ? 27017 : 21018;
-mongoose.connect(
-  `mongodb://localhost:${dbPort}/blog`,
-  { useNewUrlParser: true }
-);
+const { mongodbConfig, serverPort } = config;
+mongoose.connect(mongodbConfig.url, mongodbConfig.options);
 mongoose.connection.on('error', console.log.bind(console, 'connection error:'));
 
 const app = express();
@@ -23,10 +22,25 @@ app.use(mutipart({ uploadDir: '/tmp' }));
 app.use('/api', polling);
 app.use('/', express.static(path.resolve(__dirname, 'page')));
 
-const port = 9000;
-const server = app.listen(port, () => {
-  console.log(`server start on http://localhost:${port}`);
+const server = app.listen(serverPort, () => {
+  console.log(`server start on http://localhost:${serverPort}`);
 });
 
 server.timeout = 0;
 server.keepAliveTimeout = 5000;
+
+
+process.on('uncaughtException', function (err: Error, origin: string) {
+  logger.info({
+    type: 'uncaughtException',
+    err,
+    message: err.message,
+    name: err.name,
+    origin,
+    errorMessage: err?.stack
+  });
+});
+
+process.on('unhandledRejection', reason => {
+  logger.error({ type: 'unhandledRejection', reason });
+});

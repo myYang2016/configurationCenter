@@ -2,6 +2,7 @@ const { ajax } = require('./common');
 
 (() => {
   const run = async (id) => {
+    console.log(id);
     const formData = {
       key: 'testName',
     };
