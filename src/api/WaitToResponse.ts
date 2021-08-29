@@ -53,7 +53,9 @@ export default class WaitToResponse {
     ConfigDataForClient.findOneAndUpdate({ id, createdAt: Date.now() }).then(() => {
       res.json(portResult.success('', { id, json }));
     }).catch(error => {
-      console.log(error);
+      res.json(portResult.error(error.message));
+    }).finally(() => {
+      cache = null;
     });
   }
 }
